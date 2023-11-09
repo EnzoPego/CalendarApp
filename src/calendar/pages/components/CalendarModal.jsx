@@ -1,10 +1,18 @@
 import { addHours, differenceInSeconds } from "date-fns";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import Swal from "sweetalert2";
+import 'sweetalert2//dist/sweetalert2.min.css'
+
 import Modal from "react-modal";
 
 import DatePicker,{registerLocale} from "react-datepicker";
-import es from 'date-fns/locale/es';
 import "react-datepicker/dist/react-datepicker.css";
+
+import es from 'date-fns/locale/es';
+import { useUiStore } from "../../../hooks/useUiStore";
+import { useCalendarStore } from "../../../hooks/useCalendarStore";
+
 
 registerLocale('es',es)
 
@@ -23,20 +31,42 @@ const customStyles = {
 Modal.setAppElement("#root");
 
 export const CalendarModal = () => {
-  const [isOpen, setIsOpen] = useState(true);
+
+  const  { isDateModalOpen ,closeDateModal } = useUiStore()
+  const {activeEvent,startSavingEvent} = useCalendarStore()
+
+  const [formSubmitted, setformSubmitted] = useState(false)
+
 
   const [formValues, setformValues] = useState({
-    title: "Enzo",
-    notes: "Cualquiera",
+    title: "",
+    notes: "",
     start: new Date(),
     end: addHours(new Date(), 2),
   });
+
+  const titleClass = useMemo(() => {
+    if (!formSubmitted) return ''
+
+    return (formValues.title.length > 0)
+      ? ''
+      : 'is-invalid'
+
+  }, [formValues.title, formSubmitted])
+
+
+  useEffect(()=> {
+    if (activeEvent !== null){
+      setformValues( {...activeEvent} )
+    }
+  },[activeEvent])
 
 
   const onInputChanged = (event) => {
     setformValues({
       ...formValues,
-      [event.target.name]: [event.target.value],
+      [event.target.name]: event.target.value,
+      
     });
   };
 
@@ -50,29 +80,34 @@ export const CalendarModal = () => {
 
   const onCloseModal = () => {
     console.log("cerrando modal");
-    setIsOpen(false);
+    closeDateModal()
   };
   
 
-  const onSubmit = (event) =>{
+  const onSubmit = async (event) =>{
     event.preventDefault()
+    setformSubmitted(true)
 
     const difference = differenceInSeconds(formValues.end, formValues.start)
     //console.log({difference})
 
     if ( isNaN(difference) || difference <= 0) {
-      console.log('Error de fecha')
+      Swal.fire('Fechas incorrectas','Revisar las fechas ingresadas','error')
       return
     }
 
-    if (formValues.title.length <= 0)
-    return
+    if (formValues.title.length <= 0) return
+    console.log(formValues)
+
+    await startSavingEvent(formValues)
+    closeDateModal()
+    setformSubmitted(false)
   }
 
-
+  
   return (
     <Modal
-      isOpen={isOpen}
+      isOpen={ isDateModalOpen }
       onRequestClose={onCloseModal}
       style={customStyles}
       className="modal"
@@ -114,7 +149,7 @@ export const CalendarModal = () => {
           <label>Titulo y notas</label>
           <input
             type="text"
-            className="form-control"
+            className={`form-control ${titleClass}`}
             placeholder="Título del evento"
             name="title"
             autoComplete="off"
