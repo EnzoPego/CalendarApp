@@ -11,11 +11,12 @@ const tempEvent = {
     bgColor:'#fafafa',
     user:{
       _id: '123',
-      name:'Enzo'
+      name:'Juan'
     }
 }
 
 export const calendarSlice = createSlice({
+    
     name:'calendar',
     initialState:{
         events: [
@@ -23,14 +24,17 @@ export const calendarSlice = createSlice({
         ],
         activeEvent: null,
     },
+
     reducers:{
         onSetActiveEvent: (state, { payload }) => {
             state.activeEvent = payload
         },
+
         onAddNewEvent: (state,{payload}) => {
             state.events.push( payload )
             state.activeEvent = null
         },
+
         onUpdateEvent:(state, {payload}) =>{
             state.events = state.events.map(event => {
                 if (event._id === payload._id) {
@@ -39,6 +43,7 @@ export const calendarSlice = createSlice({
                 return event
             })
         },
+
         onDeleteEvent:(state) => {
             if (state.activeEvent) {
                 state.events = state.events.filter(event => event._id !== state.activeEvent._id)

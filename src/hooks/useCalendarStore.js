@@ -26,7 +26,7 @@ export const useCalendarStore = () => {
     dispatch(onDeleteEvent())
   }
 
-  return {
+  return { 
     //Propiedades
     events,
     activeEvent,
